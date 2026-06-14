@@ -1,13 +1,12 @@
 """
 简历解析模块：从 PDF/Word/文本 中提取学生画像
 """
-import pdfplumber
-from docx import Document
 from io import BytesIO
 from .api_client import call_deepseek_json
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     """从 PDF 文件中提取文字"""
+    import pdfplumber
     text = ""
     with pdfplumber.open(BytesIO(file_bytes)) as pdf:
         for page in pdf.pages:
@@ -19,6 +18,7 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
 
 def extract_text_from_docx(file_bytes: bytes) -> str:
     """从 Word 文件中提取文字"""
+    from docx import Document
     doc = Document(BytesIO(file_bytes))
     text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
     return text.strip()

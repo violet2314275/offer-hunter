@@ -156,6 +156,8 @@ def init_session_state():
         st.session_state.diagnosis = None
     if "api_tested" not in st.session_state:
         st.session_state.api_tested = False
+    if "page" not in st.session_state:
+        st.session_state.page = "resume"
 
 
 # ========== 页面 1：简历上传 & 画像解析 ==========
@@ -563,14 +565,21 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
+    # 页面路由定义
+    page_options = ["📄 简历上传 & 画像解析", "🎯 智能岗位匹配", "📝 简历诊断 & 优化"]
+    page_values = ["resume", "match", "diagnosis"]
+    
     # 侧边栏导航
     with st.sidebar:
         st.markdown("## 📋 导航")
-        page = st.radio(
-            "选择页面",
-            ["📄 简历上传 & 画像解析", "🎯 智能岗位匹配", "📝 简历诊断 & 优化"],
-            key="page_selector"
-        )
+        
+        # Radio 同步到 session_state.page，避免 rerun 死循环
+        current_page = st.session_state.get("page", "resume")
+        idx = page_values.index(current_page) if current_page in page_values else 0
+        
+        page = st.radio("选择页面", page_options, key="page_selector", index=idx)
+        selected = page_values[page_options.index(page)]
+        st.session_state.page = selected
         
         # 进度条
         st.markdown("---")
@@ -588,29 +597,13 @@ def main():
         st.markdown("**关于**")
         st.markdown("Offer 捕手 v1.0\n\nAI 驱动的学生求职匹配智能体\n\n技术栈：Streamlit + DeepSeek API")
     
-    # 页面路由
-    page_map = {
-        "📄 简历上传 & 画像解析": "resume",
-        "🎯 智能岗位匹配": "match",
-        "📝 简历诊断 & 优化": "diagnosis",
-    }
-    
-    # 从 session_state 或 radio 获取当前页面
-    current_page = st.session_state.get("page", "resume")
-    selected_page = page_map.get(page, "resume")
-    
-    # 如果 radio 切换了页面，更新 session_state
-    if selected_page != current_page:
-        st.session_state.page = selected_page
-        st.rerun()
-    
-    current_page = st.session_state.get("page", "resume")
-    
-    if current_page == "resume":
+    # 根据 session_state 路由到对应页面
+    route = st.session_state.get("page", "resume")
+    if route == "resume":
         page_resume()
-    elif current_page == "match":
+    elif route == "match":
         page_match()
-    elif current_page == "diagnosis":
+    elif route == "diagnosis":
         page_diagnosis()
 
 
