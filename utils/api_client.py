@@ -26,8 +26,19 @@ API_KEY = _get_config("DEEPSEEK_API_KEY")
 BASE_URL = _get_config("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 MODEL = _get_config("DEEPSEEK_MODEL", "deepseek-chat")
 
-# 初始化 OpenAI 客户端（兼容 DeepSeek）
-client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+# 懒加载 OpenAI 客户端，避免在 Streamlit secrets 准备好之前初始化
+_client = None
+
+def _get_client() -> OpenAI:
+    """懒加载获取 OpenAI 客户端实例"""
+    global _client, API_KEY, BASE_URL
+    if _client is None:
+        # 重新读取配置（Streamlit secrets 可能此时才就绪）
+        API_KEY = _get_config("DEEPSEEK_API_KEY")
+        BASE_URL = _get_config("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+        MODEL = _get_config("DEEPSEEK_MODEL", "deepseek-chat")
+        _client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+    return _client
 
 
 def call_deepseek(
@@ -52,7 +63,7 @@ def call_deepseek(
     """
     for attempt in range(max_retries):
         try:
-            response = client.chat.completions.create(
+            response = _get_client().chat.completions.create(
                 model=MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
